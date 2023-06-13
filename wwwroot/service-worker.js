@@ -6,6 +6,8 @@ var archivosEstaticos = [
     "/lib/jquery/dist/jquery.min.js",
     "/lib/bootstrap/dist/js/bootstrap.bundle.min.js",
     "/js/menu.js",
+    "/js/generic.js",
+    "/img/loading.gif",
     "/"
 ]
 
