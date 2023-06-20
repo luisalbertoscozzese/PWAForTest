@@ -1,4 +1,5 @@
-﻿var nombreCacheEstatico="cacheEstatico1"
+﻿var nombreCacheEstatico = "cacheEstatico1"
+var nombreCacheDinamico = "cacheDinamico1"
 
 var archivosEstaticos = [
     "/css/menu.css",
@@ -8,6 +9,8 @@ var archivosEstaticos = [
     "/js/menu.js",
     "/js/generic.js",
     "/img/loading.gif",
+    "Persona/listarPersonas",
+    "PaginaError/Index",
     "/"
 ]
 
@@ -38,12 +41,27 @@ self.addEventListener("fetch", event => {
         {
             return fetch(event.request).then(response =>
             {
-                return response
+                caches.open(nombreCacheDinamico).then(cache => { 
+                    cache.put(event.request,response)
+                })
+                return response.clone()
             })
         }
     }).catch(err =>
     {
-        return null
+        if (event.request.headers.get("accept").includes("text/html")) {
+            return caches.match("/PaginaError/Index")
+
+        }
+        else {
+            var response = new Response('<h1 class="text-danger">Para realizar esta accion necesita internet</h1>'
+                , {
+                    headers: {
+                        "Content-Type": "test/html"
+                    }
+                })
+            return response
+        }
     })
 
     //if (event.request.url == "https://localhost:7294/css/menu.css")
