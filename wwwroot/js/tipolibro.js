@@ -8,7 +8,8 @@ function listarTipoLibro() {
         propiedades: ["nombre", "descripcion"],
         cabeceras: ["Tipo Libro", "Descripcion"],
         titlePopup: "Tipo Libro",
-        rowClickRecuperar:true
+        rowClickRecuperar: true,
+        propiedadId:"idtipolibro"
     }, {
         url: "TipoLibro/listarTipoLibro",
         formulario: [
@@ -24,6 +25,8 @@ function listarTipoLibro() {
     }, {
         type: "popup",
         urlguardar: "TipoLibro/guardarTipoLibro",
+        urlrecuperar: "TipoLibro/recuperarTipoLibro",
+        parametrorecuperar:"id",
         formulario: [
             [
                 {

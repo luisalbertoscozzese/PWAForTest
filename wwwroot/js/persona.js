@@ -1,5 +1,26 @@
 ﻿window.onload = function () {
     listarPersonas();
+    activarNotificaciones();
+}
+
+function activarNotificaciones(){
+
+    if (window.Notification) {
+
+        if (Notification.permission != "granted") {
+
+            Notification.requestPermission(function (rpta) {
+
+                if (rpta == "granted") {
+
+                    new Notification("Mi Primera Notificacion", {
+                        body: "Contenido de notificacion",
+                        icon:"/img/icon-192.png"
+                        });
+                }
+            })
+        }
+    }
 }
 
 function listarPersonas() {
