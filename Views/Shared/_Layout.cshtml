@@ -7,9 +7,10 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/menu.css"/>
     <link rel="stylesheet" href="~/PWAForTest.styles.css"/>
+    <link rel="manifest" href="/manifest.json" />
 </head>
 <body>
-    <header class="header">
+    <header class="header" id="header">
         <div class="container">
             <nav class="navbar">
                 <b id="opcionConexion"> <p class="text-success">Conectado a Internet</p> </b>
@@ -23,10 +24,12 @@
                     <ul class="menu-block">
                         <li class="menu-item"><a class="menu-link" href="/">Persona</a></li>
                         <li class="menu-item"><a class="menu-link" href="/TipoLibro/Index">Tipo Libro</a></li>
-                        <li class="menu-item"><a class="menu-link" href="#">Pagina 3</a></li>
-                        <li class="menu-item"><a class="menu-link" href="#">Pagina 4</a></li>
-                        <li class="menu-item"><a class="menu-link" href="#">Pagina 5</a></li>
-                        <li class="menu-item"><a class="menu-link" href="#">Pagina 6</a></li>
+                        <li class="menu-item"><a class="menu-link" href="/Libro/Index">Libro</a></li>
+                        <li class="menu-item"><a class="menu-link" href="/Galeria/Index">Galeria</a></li>
+                        <li class="menu-item"><a class="menu-link" href="/Contactos/Index">Contactos</a></li>
+                        <li class="menu-item" id="menuInstalar"><a class="menu-link" onclick="Instalar()">Instalar</a></li>
+                        <li class="menu-item"><a class="menu-link" >
+                            <button onclick="Permiso()">Agregar Permisos</button></a></li>
                     </ul>
                 </div>
             </nav>
@@ -62,6 +65,8 @@
         window.onoffline=function(){
             document.getElementById("opcionConexion").innerHTML="<p class='text-danger'>Sin Conexion a la Red</p>"
         }
+
+        bloqueoPantalla();
 
         if (navigator.serviceWorker)
         {
@@ -122,6 +127,17 @@
         else
         {
             console.log("NO permite")
+        }
+
+        document.getElementById("menuInstalar").style.display="none"
+        if(getPWADisplayMode()=="browser"){
+                    document.getElementById("menuInstalar").style.display="inline-block"
+        }
+
+        function Permiso(){
+            DetectarInactividad(60,function(){
+                document.location.href = "/Galeria/Index";
+            })
         }
 
     </script>

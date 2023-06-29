@@ -145,7 +145,9 @@ self.addEventListener("push", event => {
     var valores=data.split("_")
     var titulo = valores[0]
     var opciones = {
-        body: valores[1]
+        body: valores[1],
+        icon: valores[2],
+        vibrate: [200, 100, 200, 100, 200, 100, 200]
     }
     event.waitUntil(self.registration.showNotification(titulo,opciones))
 })

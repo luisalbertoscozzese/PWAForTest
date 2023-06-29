@@ -1251,16 +1251,255 @@ function pintarExcelGenerico(idelemento, dataCadena, editable, especificoeditabl
     setI(idelemento, contenido);
 }
 
+function IniciarCamara(idvideo) {
+    if (navigator.mediaDevices) {
+        var videoFoto = document.getElementById(idvideo)
+        navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false
+        }
+        ).then(stream => {
+            videoFoto.srcObject = stream;
+        }).catch(err => {
+            alert(err)
+        });
+    }
+}
 
 
+function ApagarCamara(idvideo) {
+    var videoObject = document.getElementById(idvideo)
+    videoObject.pause()
+    videoObject.srcObject.getTracks()[0].stop()
+}
+
+function obtenerImagenVideo(idvideo) {
+    const video = document.getElementById(idvideo);
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d')
+        .drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataURL = canvas.toDataURL();
+    return dataURL
+}
+
+async function compartirDatosAplicaciones(titulo, texto, url) {
+    try {
+        if (navigator.share) {
+            await navigator.share({
+                title: titulo,
+                text: texto,
+                url: url
+            })
+        }
+
+    } catch (err) {
+        console.log(" No se puede compartir " + err)
+    }
+}
+
+async function escribirPortapapeles(texto) {
+    const respuesta = await navigator.clipboard.writeText(texto);
+    return respuesta;
+}
+
+async function leerPortapapeles() {
+    const respuesta = await navigator.clipboard.readText();
+    return respuesta;
+}
+
+async function capturaPantalla(html, nombre) {
+    var data = await html2canvas(html)
+    var image = data.toDataURL();
+    var a = document.createElement("a")
+    a.href = image;
+    a.download = nombre;
+    a.click();
+}
+
+function FullScreenElement(el) {
+    if (!document.fullscreenElement) {
+        el.requestFullscreen();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+function VozTexto(texto) {
+    if ('speechSynthesis' in window) {
+        const synth = window.speechSynthesis
+        const utterThis = new SpeechSynthesisUtterance(texto)
+        utterThis.pitch = 1;
+        utterThis.rate = 1;
+        utterThis.volume = 1;
+        synth.speak(utterThis)
+    } else {
+        console.log("Web Speech API not supported :-(")
+    }
+
+}
+
+function vibrarTelefono(tiempo=500) {
+    if (navigator.vibrate)
+        navigator.vibrate([tiempo])
+}
+
+function startListening(callback) {
+    var recognition = new (webkitSpeechRecognition || SpeechRecognition)();
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.start();
+    recognition.onresult = function () {
+        callback(event.results[event.results.length - 1][0].transcript.trim());
+    };
+}
+
+async function b64toBlob(base64) {
+    const base64Response = await fetch(base64);
+    const blob = await base64Response.blob();
+    return URL.createObjectURL(blob)
+}
 
 
+async function compartirImagen(titulo, texto, base64) {
+    const urlBlob = await b64toBlob(base64);
+    const img = await fetch(urlBlob);
+    const blob = await img.blob();
+    filesArray = [
+        new File([blob], 'share.jpg', {
+            type: 'image/jpeg',
+            lastModified: new Date().getTime()
+        })
+    ];
+    const dt = new DataTransfer();
+    dt.items.add(filesArray[0]);
+    var files = dt.files;
+    if (navigator.canShare({ files })) {
+        await navigator.share({
+            title: titulo,
+            text: texto,
+            files
+        });
+    }
+
+}
+
+var wakeLock
+
+async function bloqueoPantalla() {
+    if ('wakeLock' in navigator) {
+        try {
+            wakeLock = await navigator.wakeLock.request();
+        }
+        catch (err) {
+            console.log(`${err.message}`);
+        }
+    }
+}
+
+const visiblePantalla = async () => {
+    if (wakeLock !== null && document.visibilityState === 'visible') {
+        await bloqueoPantalla();
+    }
+};
+
+document.addEventListener('visibilitychange', visiblePantalla);
+var header
+
+navigator.getBattery().then(bateria => {
+    header = document.getElementById("header")
+    var procentaje
+    porcentaje = bateria.level * 100
+
+    if (porcentaje < 15) {
+        header.style.background = "#C82333"
+    } else if (porcentaje < 45) {
+        header.style.background = "#E0AB00"
+    } else {
+        header.style.background = "white"
+    }
 
 
+    bateria.addEventListener("levelchange", function () {
+        console.log(bateria.level * 100)
+        if (porcentaje < 15) {
+            header.style.background = "#C82333"
+        } else if (porcentaje < 45) {
+            header.style.background = "#E0AB00"
+        } else {
+            header.style.background = "white"
+        }
+    })
+
+})
+
+async function seleccionarContacto(contactos) {
+
+    const isSupported = ('contacts' in navigator && 'ContactsManager' in window);
+    const availableProperties = await navigator.contacts.getProperties();
+    if (isSupported && availableProperties.includes('tel')) {
+        try {
+            const props = ['icon', 'name', 'tel', 'email', 'address'];
+            const opts = { multiple: true };
+            const contacts = await navigator.contacts.select(props, opts);
+            contactos(contacts);
+        } catch {
+            console.log("Ocurrio un error")
+        }
+    } else {
+        console.log('No se puede acceder a la API de contactos')
+    }
 
 
+}
 
+let deferredPrompt;
 
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+});
 
+async function Instalar() {
+    if (deferredPrompt !== null && deferredPrompt != undefined) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            deferredPrompt = null;
+        }
+    }
+}
 
+function getPWADisplayMode() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (document.referrer.startsWith('android-app://')) {
+        return 'twa';
+    } else if (navigator.standalone || isStandalone) {
+        return 'standalone';
+    }
+    return 'browser';
+}
 
+var controller = new AbortController();
+var signal = controller.signal;
+
+async function DetectarInactividad(tiempoSegundos, callbackInactivo, callbackActivo) {
+    if (await IdleDetector.requestPermission() != "granted") {
+        return false;
+    }
+    var oIdleDetector = new IdleDetector();
+    oIdleDetector.addEventListener("change", (e) => {
+        var useState = oIdleDetector.userState;
+        if (useState == "idle") callbackInactivo();
+        else callbackActivo();
+    })
+    await oIdleDetector.start({
+        threshold: tiempoSegundos * 1000,
+        signal
+    })
+}

@@ -6,6 +6,13 @@ namespace PWAForTest.Controllers
 {
     public class TipoLibroController : Controller
     {
+        private readonly IWebHostEnvironment _env;
+
+        public TipoLibroController(IWebHostEnvironment env)
+        {
+            _env = env;
+        }
+
         public IActionResult Index()
         {
             return View();
@@ -14,6 +21,10 @@ namespace PWAForTest.Controllers
         public List<TipoLibroCLS> listarTipoLibro(string nombreTipoLibrobusqueda) 
         { 
             List<TipoLibroCLS> lista = new List<TipoLibroCLS>();
+            string rutaCompleta = Path.Combine(_env.ContentRootPath, "wwwroot/img/NoImgAvailable.png");
+            byte[] buffer = System.IO.File.ReadAllBytes(rutaCompleta);
+            string base64NoImgAvailable= Convert.ToBase64String(buffer);
+            string base64NoImgAvailableFinal ="data:img/png;base64," + base64NoImgAvailable;
             using (DbA9acbfDbbibliotecaContext bd = new DbA9acbfDbbibliotecaContext())
             {
                 if (nombreTipoLibrobusqueda == null)
@@ -24,8 +35,10 @@ namespace PWAForTest.Controllers
                              {
                                  idtipolibro = tipoLibro.Iidtipolibro,
                                  nombre = tipoLibro.Nombretipolibro,
-                                 descripcion = tipoLibro.Descripcion
-                             }).ToList();
+                                 descripcion = tipoLibro.Descripcion,
+                                 base64= tipoLibro.Nombrearchivo==null? base64NoImgAvailableFinal 
+                                 : "data:image/" + Path.GetExtension(tipoLibro.Nombrearchivo).Replace(".","") + ";base64," + Convert.ToBase64String(tipoLibro.Archivo?? new byte[0])
+                }).ToList();
                 }
                 else 
                 {
@@ -36,7 +49,9 @@ namespace PWAForTest.Controllers
                              {
                                  idtipolibro = tipoLibro.Iidtipolibro,
                                  nombre = tipoLibro.Nombretipolibro,
-                                 descripcion = tipoLibro.Descripcion
+                                 descripcion = tipoLibro.Descripcion,
+                                 base64 = tipoLibro.Nombrearchivo == null ? base64NoImgAvailableFinal
+                                 : "data:image/" + Path.GetExtension(tipoLibro.Nombrearchivo).Replace(".", "") + ";base64," + Convert.ToBase64String(tipoLibro.Archivo ?? new byte[0])
                              }).ToList();
 
                 }
@@ -61,13 +76,29 @@ namespace PWAForTest.Controllers
 
                 tipoLibroCLS.descripcion = tipoLibro.Descripcion;
 
+                tipoLibroCLS.base64 = tipoLibro.Archivo==null? string.Empty: "data:image/" + Path.GetExtension(tipoLibro.Nombrearchivo).Replace(".","") + ";base64,"+ Convert.ToBase64String(tipoLibro.Archivo);
+
                 return tipoLibroCLS;
             }
         }
 
-        public int guardarTipoLibro(TipoLibroCLS tipoLibroCLS) 
+        public int guardarTipoLibro(TipoLibroCLS tipoLibroCLS, IFormFile fotoEnviar) 
         {
             int rpta = 0;
+            byte[] buffer;
+            string nombreFoto = string.Empty;
+
+            if (fotoEnviar != null)
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    fotoEnviar.CopyTo(ms);
+                    nombreFoto = fotoEnviar.FileName;
+                    buffer = ms.ToArray();
+                    tipoLibroCLS.foto = buffer;
+                    tipoLibroCLS.nombreFoto = nombreFoto;
+                }
+            }
 
             using (DbA9acbfDbbibliotecaContext bd = new DbA9acbfDbbibliotecaContext()) 
             {
@@ -78,6 +109,8 @@ namespace PWAForTest.Controllers
                         TipoLibro tipoLibro = new TipoLibro();
                         tipoLibro.Nombretipolibro = tipoLibroCLS.nombre;
                         tipoLibro.Descripcion = tipoLibroCLS.descripcion;
+                        tipoLibro.Archivo = tipoLibroCLS.foto;
+                        tipoLibro.Nombrearchivo= tipoLibroCLS.nombreFoto;
                         tipoLibro.Bhabilitado = 1;
                         bd.TipoLibros.Add(tipoLibro);
                         bd.SaveChanges();
@@ -89,6 +122,11 @@ namespace PWAForTest.Controllers
                         TipoLibro tipoLibro = bd.TipoLibros.Where(x => x.Iidtipolibro == tipoLibroCLS.idtipolibro).First();
                         tipoLibro.Nombretipolibro = tipoLibroCLS.nombre;
                         tipoLibro.Descripcion = tipoLibroCLS.descripcion;
+                        if (nombreFoto != string.Empty)
+                        {
+                            tipoLibro.Archivo = tipoLibroCLS.foto;
+                            tipoLibro.Nombrearchivo = tipoLibroCLS.nombreFoto;
+                        }
                         bd.SaveChanges();
                         rpta = 1;
                     }

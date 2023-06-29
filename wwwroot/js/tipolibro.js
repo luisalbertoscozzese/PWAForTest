@@ -2,14 +2,17 @@
     listarTipoLibro();
 }
 
+var bc=new BroadcastChannel("TipoLibro")
+
 function listarTipoLibro() {
     pintar({
         url: "TipoLibro/listarTipoLibro",
-        propiedades: ["nombre", "descripcion"],
-        cabeceras: ["Tipo Libro", "Descripcion"],
+        propiedades: ["base64","nombre"],
+        cabeceras: ["Foto","Tipo Libro"],
         titlePopup: "Tipo Libro",
         rowClickRecuperar: true,
-        propiedadId:"idtipolibro"
+        propiedadId: "idtipolibro",
+        columnaimg:["base64"]
     }, {
         url: "TipoLibro/listarTipoLibro",
         formulario: [
@@ -39,21 +42,38 @@ function listarTipoLibro() {
                     class: "col-md-6",
                     label: "Nombre Tipo Libro",
                     name: "nombre",
-                    type: "text"
+                    type: "text",
+                    classControl:"ob max-20"
                 },
                 {
                     class: "col-md-6",
                     label: "Descripcion Tipo Libro",
                     name: "descripcion",
-                    type: "textarea"
+                    type: "textarea",
+                    classControl: "ob max-300"
+                },
+                {
+                    class: "col-md-6",
+                    label: "Suba una foto",
+                    name: "fotoEnviar",
+                    type: "file",
+                    preview: true,
+                    imgwidth: 100,
+                    imgheight: 100,
+                    namefoto:"base64"
                 }
             ]
         ],
         callbackGuardar: function () {
             var frm = new FormData();
+            var contenido="Se guardo los cambios del tipo libro "+ getN("nombre")
+            frm.append("parametroPorContenido", "Registro Satisfactorio_"+ contenido +"_Contenido de la alerta_/img/icon-512.png")
+            fetchPostSinLoading("Notificacion/enviarNotificaciones", "text", frm, () => { })
 
-            frm.append("parametroPorContenido", "Prueba_COntenido de la alerta")
-            fetchPost("Notificacion/enviarNotificaciones", "text", frm, () => { })
+            if (getN("idtipolibro") != "") {
+                bc.postMessage(getN("idtipolibro") + "_" + getN("nombre"))
+            }
+
 
         }
        }
